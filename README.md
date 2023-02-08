@@ -1,8 +1,17 @@
 # node-fetch-har
 
-[![npm](https://img.shields.io/npm/v/node-fetch-har.svg)][npm]
-[![Travis](https://img.shields.io/travis/exogen/node-fetch-har.svg)][travis]
-[![Coveralls](https://img.shields.io/coveralls/github/exogen/node-fetch-har.svg)][coveralls]
+## Update
+
+This is a fork of [node-fetch-har](https://www.npmjs.com/package/node-fetch-har).
+The changes include:
+
+1. Adding basic typescript support. 
+   - More work needs to be done to remove 'any' usage for some prototype override hacks.
+2. Removing all fetch libaries support besides node-fetch.
+3. Updating all dependencies and supporting latest node releases.
+4. Adding dependency on typescript-specific hars package: [@hars-sdk/core](https://www.npmjs.com/package/@har-sdk/core).
+
+## Description
 
 A [Fetch API][fetch] wrapper that records [HAR logs][har] for server requests
 made with [node-fetch][]. You can then expose this data to get visibility into
@@ -35,8 +44,8 @@ The `withHar` function takes a base Fetch implementation such as `node-fetch`
 and returns a new one that records HAR entries:
 
 ```js
-import { withHar } from "node-fetch-har";
-import nodeFetch from "node-fetch";
+import { withHar } from 'node-fetch-har';
+import nodeFetch from 'node-fetch';
 
 const fetch = withHar(nodeFetch);
 ```
@@ -44,9 +53,9 @@ const fetch = withHar(nodeFetch);
 Individual HAR entries can then accessed on the `response` object:
 
 ```js
-fetch("https://httpstat.us/200").then(response => {
-  console.log(response.harEntry);
-  return response;
+fetch('https://httpstat.us/200').then((response) => {
+    console.log(response.harEntry);
+    return response;
 });
 ```
 
@@ -54,7 +63,7 @@ Or by configuring `withHar` with an `onHarEntry` callback:
 
 ```js
 const fetch = withHar(nodeFetch, {
-  onHarEntry: entry => console.log(entry)
+    onHarEntry: (entry) => console.log(entry),
 });
 ```
 
@@ -63,17 +72,17 @@ You can also customize `onHarEntry` for individual requests:
 ```js
 const fetch = withHar(nodeFetch);
 
-fetch("https://httpstat.us/200", {
-  onHarEntry: entry => console.log(entry)
+fetch('https://httpstat.us/200', {
+    onHarEntry: (entry) => console.log(entry),
 });
 ```
 
 To disable HAR tracking for individual requests, set the `har` option to `false`:
 
 ```js
-fetch("https://httpstat.us/200", { har: false }).then(response => {
-  console.log(response.harEntry); // Should be undefined.
-  return response;
+fetch('https://httpstat.us/200', { har: false }).then((response) => {
+    console.log(response.harEntry); // Should be undefined.
+    return response;
 });
 ```
 
@@ -86,20 +95,20 @@ You can pass the resulting object via the `har` option and entries will
 automatically be added to it:
 
 ```js
-import { withHar, createHarLog } from "node-fetch-har";
-import nodeFetch from "node-fetch";
+import { withHar, createHarLog } from 'node-fetch-har';
+import nodeFetch from 'node-fetch';
 
 async function run() {
-  const har = createHarLog();
-  const fetch = withHar(nodeFetch, { har });
+    const har = createHarLog();
+    const fetch = withHar(nodeFetch, { har });
 
-  await Promise.all([
-    fetch("https://httpstat.us/200"),
-    fetch("https://httpstat.us/200"),
-    fetch("https://httpstat.us/200")
-  ]);
+    await Promise.all([
+        fetch('https://httpstat.us/200'),
+        fetch('https://httpstat.us/200'),
+        fetch('https://httpstat.us/200'),
+    ]);
 
-  console.log(har);
+    console.log(har);
 }
 ```
 
@@ -108,28 +117,6 @@ collected them in a different way:
 
 ```js
 const har = createHarLog(entries);
-```
-
-### …with Isomorphic Fetch
-
-When using “universal” libraries like [cross-fetch][], [isomorphic-fetch][], or
-[isomorphic-unfetch][], **make sure you only import this library and wrap the
-Fetch instance on the server.** Not only does this library require built-in Node
-modules, but it’s unnecessary in the browser anyway, since you can already spy
-on requests (and export HAR logs) via the Network tab.
-
-The following example assumes your bundler (e.g. webpack) is configured to strip
-out conditional branches based on `process.browser`.
-
-```js
-import baseFetch from "isomorphic-unfetch";
-
-let fetch = baseFetch;
-
-if (!process.browser) {
-  const { withHar } = require("node-fetch-har");
-  fetch = withHar(baseFetch);
-}
 ```
 
 ### Redirects
@@ -172,14 +159,14 @@ does not originate from a Fetch instance returned by `withHar`.
 The second argument to `createHarLog` allows you to add some initial page info:
 
 ```js
-const har = createHarLog([], { title: "My Page" });
+const har = createHarLog([], { title: 'My Page' });
 ```
 
 If you have additional pages within a single log, you’ll have to add them
 yourself:
 
 ```js
-har.log.pages.push({ title: "2nd Page" });
+har.log.pages.push({ title: '2nd Page' });
 ```
 
 If not provided, a default page will be created with an ID of `page_1`. By
@@ -187,13 +174,13 @@ default, all HAR entries will reference this page. To customize the page that
 entries reference, use the `harPageRef` option to `withHar`:
 
 ```js
-const fetch = withHar(nodeFetch, { har, harPageRef: "page_2" });
+const fetch = withHar(nodeFetch, { har, harPageRef: 'page_2' });
 ```
 
 Or use the `harPageRef` option to `fetch` for individual requests:
 
 ```js
-await fetch(url, { harPageRef: "page_2" });
+await fetch(url, { harPageRef: 'page_2' });
 ```
 
 ## Examples
@@ -211,7 +198,7 @@ $ yarn start
 
 ## TODO
 
-- More tests for different response types, protocols (HTTP/2), encodings, etc.
+-   More tests for different response types, protocols (HTTP/2), encodings, etc.
 
 ## How does it work?
 
@@ -223,9 +210,4 @@ key timestamps and metadata like the HTTP version.
 [fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
 [node-fetch]: https://github.com/bitinn/node-fetch
 [har]: http://www.softwareishard.com/blog/har-12-spec/
-[cross-fetch]: https://github.com/lquixada/cross-fetch
-[isomorphic-fetch]: https://github.com/matthew-andrews/isomorphic-fetch
-[isomorphic-unfetch]: https://github.com/developit/unfetch
 [npm]: https://www.npmjs.com/package/node-fetch-har
-[travis]: https://travis-ci.org/exogen/node-fetch-har
-[coveralls]: https://coveralls.io/github/exogen/node-fetch-har
