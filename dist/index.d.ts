@@ -8,3 +8,4 @@ export declare namespace withHar {
     var harEntryMap: Map<string, HarEntry>;
 }
 export declare function createHarLog(entries?: Entry[], pageInfo?: Partial<Page>): Har;
+//# sourceMappingURL=index.d.ts.map

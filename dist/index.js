@@ -1,11 +1,31 @@
-export * from './types';
-import { URL } from 'url';
-import http from 'http';
-import https from 'https';
-import querystring from 'querystring';
-import { Headers } from 'node-fetch-commonjs';
-import { Buffer } from 'buffer';
-import { v4 as uuidv4 } from 'uuid';
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createHarLog = exports.withHar = void 0;
+__exportStar(require("./types"), exports);
+const url_1 = require("url");
+const http_1 = __importDefault(require("http"));
+const https_1 = __importDefault(require("https"));
+const querystring_1 = __importDefault(require("querystring"));
+const node_fetch_commonjs_1 = require("node-fetch-commonjs");
+const buffer_1 = require("buffer");
+const uuid_1 = require("uuid");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const cookie = require('cookie');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -24,7 +44,7 @@ function getDuration(a, b) {
     return seconds * 1000 + nanoseconds / 1e6;
 }
 function getHeaderValue(headers, name) {
-    if (headers instanceof Headers) {
+    if (headers instanceof node_fetch_commonjs_1.Headers) {
         return headers.get(name);
     }
     else if (typeof headers === 'object') {
@@ -41,30 +61,32 @@ function getHeaderValue(headers, name) {
     return undefined;
 }
 function getUrl(request, options) {
+    var _a;
     if (options.href) {
-        return new URL(options.href);
+        return new url_1.URL(options.href);
     }
-    const hostname = options.host ?? options.hostname;
+    const hostname = (_a = options.host) !== null && _a !== void 0 ? _a : options.hostname;
     const path = request.path;
     const protocol = options.protocol;
     const port = options.port;
     if (hostname && path && protocol) {
         if (port && port !== 443) {
-            return new URL(path, `${protocol}//${hostname}:${port}`);
+            return new url_1.URL(path, `${protocol}//${hostname}:${port}`);
         }
         else {
-            return new URL(path, `${protocol}//${hostname}`);
+            return new url_1.URL(path, `${protocol}//${hostname}`);
         }
     }
     return undefined;
 }
 function handleRequest(request, options) {
+    var _a, _b;
     if (!options || typeof options !== 'object') {
         return;
     }
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    const headers = options.headers ?? {};
+    const headers = (_a = options.headers) !== null && _a !== void 0 ? _a : {};
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const requestId = getHeaderValue(headers, HAR_REQUEST_ID_HEADER);
@@ -117,10 +139,10 @@ function handleRequest(request, options) {
         request: {
             httpVersion: '',
             method: request.method,
-            url: url?.href ?? "",
+            url: (_b = url === null || url === void 0 ? void 0 : url.href) !== null && _b !== void 0 ? _b : "",
             cookies: buildRequestCookies(headers),
             headers: headers ? buildHeaders(headers) : [],
-            queryString: queryString ?? [],
+            queryString: queryString !== null && queryString !== void 0 ? queryString : [],
             headersSize: -1,
             bodySize: -1,
         },
@@ -146,12 +168,12 @@ function handleRequest(request, options) {
                 requestBody += chunk;
             }
         }
-        else if (Buffer.isBuffer(chunk)) {
+        else if (buffer_1.Buffer.isBuffer(chunk)) {
             if (!requestBody) {
                 requestBody = chunk;
             }
             else {
-                requestBody = Buffer.concat([requestBody, chunk]);
+                requestBody = buffer_1.Buffer.concat([requestBody, chunk]);
             }
         }
     };
@@ -165,7 +187,7 @@ function handleRequest(request, options) {
         concatBody(...args);
         if (requestBody && entry.request) {
             // Works for both buffers and strings.
-            entry.request.bodySize = Buffer.byteLength(requestBody);
+            entry.request.bodySize = buffer_1.Buffer.byteLength(requestBody);
             let mimeType;
             for (const name in headers) {
                 if (name.toLowerCase() === 'content-type') {
@@ -228,6 +250,7 @@ function handleRequest(request, options) {
         removeSocketListeners();
     });
     request.on('response', (response) => {
+        var _a, _b, _c, _d, _e;
         if (entry._timestamps) {
             entry._timestamps.firstByte = process.hrtime();
         }
@@ -248,21 +271,21 @@ function handleRequest(request, options) {
             entry.request.httpVersion = httpVersion;
         }
         entry.response = {
-            status: response.statusCode ?? -1,
-            statusText: response.statusMessage ?? '',
+            status: (_a = response.statusCode) !== null && _a !== void 0 ? _a : -1,
+            statusText: (_b = response.statusMessage) !== null && _b !== void 0 ? _b : '',
             httpVersion,
             cookies: buildResponseCookies(response.headers),
             headers: buildHeaders(response.rawHeaders),
             content: {
                 size: -1,
-                mimeType: response.headers['content-type'] ?? '',
+                mimeType: (_c = response.headers['content-type']) !== null && _c !== void 0 ? _c : '',
             },
-            redirectURL: response.headers.location ?? '',
+            redirectURL: (_d = response.headers.location) !== null && _d !== void 0 ? _d : '',
             headersSize: -1,
             bodySize: -1,
         };
         // Detect supported compression encodings.
-        const compressed = /^(gzip|compress|deflate|br)$/.test(response.headers['content-encoding'] ?? '');
+        const compressed = /^(gzip|compress|deflate|br)$/.test((_e = response.headers['content-encoding']) !== null && _e !== void 0 ? _e : '');
         if (compressed) {
             entry._compressed = true;
             response.on('data', (chunk) => {
@@ -270,7 +293,7 @@ function handleRequest(request, options) {
                     if (entry.response.bodySize === -1) {
                         entry.response.bodySize = 0;
                     }
-                    entry.response.bodySize += Buffer.byteLength(chunk);
+                    entry.response.bodySize += buffer_1.Buffer.byteLength(chunk);
                 }
             });
         }
@@ -295,11 +318,11 @@ function buildHeaders(headers) {
             });
         }
     }
-    else if (headers instanceof Headers) {
+    else if (headers instanceof node_fetch_commonjs_1.Headers) {
         Object.keys(headers).forEach((name) => {
             const headerValue = headers.get(name);
             const values = Array.isArray(headerValue) ? headerValue : [headerValue];
-            values?.forEach((value) => {
+            values === null || values === void 0 ? void 0 : values.forEach((value) => {
                 list.push({ name, value });
             });
         });
@@ -319,7 +342,7 @@ function buildHeaders(headers) {
 }
 function buildParams(paramString) {
     const params = [];
-    const parsed = querystring.parse(paramString);
+    const parsed = querystring_1.default.parse(paramString);
     for (const name in parsed) {
         const value = parsed[name];
         if (Array.isArray(value)) {
@@ -350,11 +373,11 @@ function buildRequestCookies(headers) {
             }
         }
     }
-    else if (headers instanceof Headers) {
+    else if (headers instanceof node_fetch_commonjs_1.Headers) {
         Object.keys(headers).forEach((name) => {
             const headerValue = headers.get(name);
             const values = Array.isArray(headerValue) ? headerValue : [headerValue];
-            values?.forEach((value) => {
+            values === null || values === void 0 ? void 0 : values.forEach((value) => {
                 const parsed = cookie.parse(value);
                 for (const name in parsed) {
                     const value = parsed[name];
@@ -393,6 +416,7 @@ function buildResponseCookies(headers) {
     const setCookies = headers['set-cookie'];
     if (setCookies) {
         setCookies.forEach((headerValue) => {
+            var _a, _b, _c, _d;
             let parsed;
             try {
                 parsed = setCookie.parse(headerValue);
@@ -405,10 +429,10 @@ function buildResponseCookies(headers) {
                 const harCookie = {
                     name: cookie.name,
                     value: cookie.value,
-                    domain: cookie.domain ?? '',
-                    path: cookie.path ?? '',
-                    httpOnly: cookie.httpOnly ?? false,
-                    secure: cookie.secure ?? false,
+                    domain: (_a = cookie.domain) !== null && _a !== void 0 ? _a : '',
+                    path: (_b = cookie.path) !== null && _b !== void 0 ? _b : '',
+                    httpOnly: (_c = cookie.httpOnly) !== null && _c !== void 0 ? _c : false,
+                    secure: (_d = cookie.secure) !== null && _d !== void 0 ? _d : false,
                 };
                 cookies.push(harCookie);
             }
@@ -419,14 +443,14 @@ function buildResponseCookies(headers) {
 function getInputUrl(input) {
     // Support URL or Request object.
     const url = typeof input === 'string' ? input : input.url;
-    return new URL(url);
+    return new url_1.URL(url);
 }
 function addHeaders(oldHeaders, newHeaders) {
     if (!oldHeaders) {
         return newHeaders;
     }
     else {
-        const headers = new Headers(oldHeaders);
+        const headers = new node_fetch_commonjs_1.Headers(oldHeaders);
         newHeaders.forEach((value, key) => {
             headers.set(key, value);
         });
@@ -476,18 +500,18 @@ function getGlobalAgent(input) {
     const url = getInputUrl(input);
     if (url.protocol === 'http:') {
         if (!globalHttpAgent) {
-            globalHttpAgent = new http.Agent();
+            globalHttpAgent = new http_1.default.Agent();
             instrumentAgentInstance(globalHttpAgent);
         }
         return globalHttpAgent;
     }
     if (!globalHttpsAgent) {
-        globalHttpsAgent = new https.Agent();
+        globalHttpsAgent = new https_1.default.Agent();
         instrumentAgentInstance(globalHttpsAgent);
     }
     return globalHttpsAgent;
 }
-export function withHar(baseFetch, defaults = {}) {
+function withHar(baseFetch, defaults = {}) {
     return function fetch(input, options = {}) {
         const { isEnabled = defaults.isEnabled, har = defaults.har, harPageRef = defaults.harPageRef, onHarEntry = defaults.onHarEntry, } = options;
         if (isEnabled === false) {
@@ -505,10 +529,10 @@ export function withHar(baseFetch, defaults = {}) {
         // So instead, we generate an ID for each request and attach it to a request
         // header. The agent then adds the entry data to `harEntryMap` using the ID
         // as a key.
-        const requestId = uuidv4();
+        const requestId = (0, uuid_1.v4)();
         options = {
             ...options,
-            headers: addHeaders(options.headers, new Headers({ [HAR_REQUEST_ID_HEADER]: requestId })),
+            headers: addHeaders(options.headers, new node_fetch_commonjs_1.Headers({ [HAR_REQUEST_ID_HEADER]: requestId })),
             // node-fetch 2.x supports a function here, but 1.x does not. So parse
             // the URL and implement protocol-switching ourselves.
             agent: getAgent(input, options),
@@ -527,7 +551,7 @@ export function withHar(baseFetch, defaults = {}) {
             const parents = [];
             let child = entry;
             do {
-                const parent = child?._parent;
+                const parent = child === null || child === void 0 ? void 0 : child._parent;
                 if (parent) {
                     // Remove linked parent references as they're flattened.
                     delete child._parent;
@@ -557,7 +581,7 @@ export function withHar(baseFetch, defaults = {}) {
                 parent.pageref = entry.pageref;
             });
             // Response content info.
-            const bodySize = Buffer.byteLength(text);
+            const bodySize = buffer_1.Buffer.byteLength(text);
             entry.response.content.text = text;
             entry.response.content.size = bodySize;
             if (entry._compressed) {
@@ -619,8 +643,9 @@ export function withHar(baseFetch, defaults = {}) {
         });
     };
 }
+exports.withHar = withHar;
 withHar.harEntryMap = harEntryMap;
-export function createHarLog(entries = [], pageInfo = {}) {
+function createHarLog(entries = [], pageInfo = {}) {
     return {
         log: {
             version: '1.2',
@@ -644,4 +669,5 @@ export function createHarLog(entries = [], pageInfo = {}) {
         },
     };
 }
+exports.createHarLog = createHarLog;
 //# sourceMappingURL=index.js.map
