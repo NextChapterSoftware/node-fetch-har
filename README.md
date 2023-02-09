@@ -5,11 +5,12 @@
 This is a fork of [node-fetch-har](https://www.npmjs.com/package/node-fetch-har).
 The changes include:
 
-1. Adding basic typescript support. 
+1. Added basic typescript support. 
    - More work needs to be done to remove 'any' usage for some prototype override hacks.
-2. Removing all fetch libaries support besides node-fetch.
-3. Updating all dependencies and supporting latest node releases.
-4. Adding dependency on typescript-specific hars package: [@hars-sdk/core](https://www.npmjs.com/package/@har-sdk/core).
+2. Removed all fetch libraries support besides node-fetch.
+3. Updated all dependencies and supporting latest node releases.
+4. Added dependency on typescript-specific HARS package: [@hars-sdk/core](https://www.npmjs.com/package/@har-sdk/core).
+5. Fixed some bugs with instrumenting underlying http.Agent.
 
 ## Description
 
